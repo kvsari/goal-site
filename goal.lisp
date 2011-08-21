@@ -18,9 +18,13 @@
 (defun set-goal ()
 	(push (create-goal (prompt-read 'title) (prompt-read 'description)) *goals*))
 
-(defun search-id (id))
+(defun search-id (id goals)
+	(remove-if-not #'(lambda (goal) (equal (getf goal :id) id))
+								 goals))
 
-(defun search-title (title))
+(defun search-title (title goals)
+	(remove-if-not #'(lambda (goal) (equal (getf goal :title) title))
+								 goals))
 
 (defun set-complete (id))
 
