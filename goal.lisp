@@ -21,6 +21,7 @@
 (defun search-id (id goals)
 	(assoc id goals))
 
+; This particular function is not in the iteration 1 spec so will leave as stub for now
 (defun search-title (title goals))
 
 (defun set-complete (id goals)
@@ -31,3 +32,10 @@
 				(labels ((id-rem (tid)
 									 (eq (car (assoc (car tid) goals)) id)))
 					(remove-if #'id-rem goals))))
+
+; Work on these three functiones next!
+(defun save-goals-to-file ())
+
+(defun load-goals-from-file ())
+
+(defun list-all-goals ())
