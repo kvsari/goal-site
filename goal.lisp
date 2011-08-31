@@ -15,7 +15,10 @@
 	(format t "~a: " section)
 	(read-line))
 
-(defun set-goal ()
+(defun set-goal (title description)
+	(push (create-goal title description) *goals*))
+
+(defun set-goal-repl ()
 	(push (create-goal (prompt-read 'title) (prompt-read 'description)) *goals*))
 
 (defun search-id (id goals)
