@@ -58,8 +58,10 @@
 				 (princ "{")
 				 (princ "margin: 0;")
 				 (princ "padding: 0;")
-				 (princ "}"))))
-	
+				 (princ "}")
+				 (format t "~%~%")
+				 (princ "header, footer, aside, nav, article {  display: block;}"))))
+
 (defun goal-info ())
 
 (defun expanded-goal-info ())
