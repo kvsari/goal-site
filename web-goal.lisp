@@ -25,6 +25,45 @@
 									(list-modifiable-goals *goals*)))
 				(save-goals-to-file "test.goals" *goals*))))
 
+(defun goal-request-handler2 (path header params)
+	(progn
+		(html5-doctype)
+		(tag html ()
+				 (tag head ()
+							(tag title ()
+									 (princ "Goal Site"))
+							(embed-css3))
+				 (tag body ()
+							(print-top-navigation-menu)
+							(if (equal path "GOALS")
+									(progn
+										(load-goals-from-file "test.goals")
+										(tag h2 ()
+												 (princ "Goal section!<br>"))
+										(process-parameters params)
+										(create-goal-form)
+										(tag h3 ()
+												 (princ "All Goals<br>"))
+										(list-modifiable-goals *goals*)
+										(save-goals-to-file "test.goals" *goals*)))
+							(if (equal path "TODOLIST")
+									(progn
+										(load-todo-items-from-file "items.todo")
+										(tag h2 ()
+												 (princ "Todo List<br>"))
+										(list-todo-list *todo-list*)
+										(save-todo-items-to-file "items.todo" *todo-list*)))))))
+
+(defun print-top-navigation-menu ()
+	(tag nav ()
+			 (tag ul ()
+						(tag li ()
+								 (tag a (href 'goals)
+											(princ "Goals")))
+						(tag li ()
+								 (tag a (href 'todolist)
+											(princ "Todo List"))))))
+
 (defun html5-doctype ()
 	(princ "<!DOCTYPE HTML>"))
 
@@ -90,6 +129,12 @@
 				 (princ "border-radius: 22px;")
 				 (princ "padding: 25px;")
 				 (princ "}")
+				 (format t "~%~%")
+				 (princ "#TODOITEM {")
+				 (princ "background-color: green;")
+				 (princ "border-radius: 5px;")
+				 (princ "padding: 0px;")
+				 (princ "}")
 				 )))
 
 (defun list-goals (goals)
@@ -111,6 +156,17 @@
 									(princ "Incomplete")
 									(princ "Achieved"))))))
 
+(defun list-todo-list (todolist)
+	(mapcar #'todo-item-info todolist))
+
+(defun todo-item-info (item)
+	(tag section (id 'todoitem)
+			 (tag p ()
+						(if (eq (car (cdr (cdr (cdr item)))) nil)
+								(princ "[ ] ")
+								(princ "[*] ")) ; Need to come up with something better than this
+						(princ (car (cdr item))))))
+
 (defun modifiable-goal-info (goal)
 	(tag section (id 'expandedgoalinfo)
 			 (progn
@@ -121,4 +177,3 @@
 								(tag input (type 'submit name 'accomplished value 'Accomplish))
 								(tag input (type 'hidden name 'goalid value (car goal)))
 								(tag input (type 'submit name 'delete value 'delete)))))))
-							
