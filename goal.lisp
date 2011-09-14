@@ -61,7 +61,7 @@
 				(let ((items *todo-list*))
 					(labels ((id-rem (tid)
 										 (eq (car (assoc (car tid) items)) id)))
-						(remove-ifx #'id-rem items)))))
+						(remove-if #'id-rem items)))))
 
 (defun save-goals-to-file (filename goals)
 	(with-open-file (out filename

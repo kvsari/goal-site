@@ -5,27 +5,9 @@
 (load "goal.lisp")
 (load "webserver.lisp")
 
-(defun goal-request-handler (path header params)
-	(if (equal path "goals")
-			(progn
-				(load-goals-from-file "test.goals")
-				(html5-doctype)
-				(tag html ()
-						 (tag head ()
-									(tag title ()
-											 (princ "Goal Site"))
-									(embed-css3))
-						 (tag body ()
-									(tag h2 ()
-											 (princ "Goal Site!<br>"))
-									(process-parameters params)
-									(create-goal-form)
-									(tag h3 ()
-											 (princ "All Goals<br>"))
-									(list-modifiable-goals *goals*)))
-				(save-goals-to-file "test.goals" *goals*))))
+(defparameter *show-all* nil)
 
-(defun goal-request-handler2 (path header params)
+(defun goal-request-handler (path header params)
 	(progn
 		(html5-doctype)
 		(tag html ()
@@ -35,6 +17,7 @@
 							(embed-css3))
 				 (tag body ()
 							(print-top-navigation-menu)
+							(hide-show-completed)
 							(if (equal path "GOALS")
 									(progn
 										(load-goals-from-file "test.goals")
@@ -49,6 +32,8 @@
 							(if (equal path "TODOLIST")
 									(progn
 										(load-todo-items-from-file "items.todo")
+										(create-todo-item-form)
+										(process-parameters params)
 										(tag h2 ()
 												 (princ "Todo List<br>"))
 										(list-todo-list *todo-list*)
@@ -63,6 +48,12 @@
 						(tag li ()
 								 (tag a (href 'todolist)
 											(princ "Todo List"))))))
+
+(defun hide-show-completed ()
+	(tag p ()
+			 (tag form (method 'post)
+						(tag input (type 'submit value 'showall))
+						(tag input (type 'submit value 'hidecomplete)))))
 
 (defun html5-doctype ()
 	(princ "<!DOCTYPE HTML>"))
@@ -79,14 +70,26 @@
 				(if (equal (car (assoc 'accomplished params)) 'accomplished)
 						(let ((id (parse-integer (cdr (assoc 'goalid params)))))
 							(set-complete id *goals*)))
-				(tag script ()
-						 (princ "window.setTimeout('window.location=\"goals\"',1000)"))); Clear out the address bar of parameters
-			))
+				(if (equal (car (assoc 'createtodoitem params)) 'createtodoitem)
+						(process-create-todo-item-parameters params))
+				(if (equal (car (assoc 'todoitemdone params)) 'todoitemdone)
+						(let ((id (parse-integer (cdr (assoc 'todoitemid params)))))
+							(set-todo-item-complete id *todo-list*)))
+				(if (equal (car (assoc 'todoitemdelete params)) 'todoitemdelete)
+						(let ((id (parse-integer (cdr (assoc 'todoitemid params)))))
+							(delete-todo-item id)))
+				;(tag script ()
+				;		 (princ "window.setTimeout('window.location=\"goals\"',1000)")); Clear out the address bar of parameters
+				)))
 
 (defun process-create-goal-parameters (params)
 	(let ((title (cdr (assoc 'createGoalTitle params)))
 				(desc (cdr (assoc 'createGoalDescription params))))
 		(set-goal title desc)))
+
+(defun process-create-todo-item-parameters (params)
+	(let ((item (cdr (assoc 'createtodoitem params))))
+		(set-todo item)))
 
 (defun create-goal-form ()
 	(tag form (method 'post id 'creategoalform)
@@ -100,6 +103,16 @@
 						(princ "Goal description goes here"))
 			 (princ "<br>")
 			 (tag input (type 'submit value "Create Goal"))))
+
+(defun create-todo-item-form ()
+	(tag form (method 'post id 'createtodoitem)
+			 (tag h3 ()
+						(princ "Add todo item"))
+			 (tag p ()
+						(tag label (for 'item)
+								 (princ "Item: "))
+						(tag textarea (rows '1 cols '50 wrap 'physical name 'createTodoItem))
+						(tag input (type 'submit value "Create Todo Item")))))
 
 (defun embed-css3 ()
 	(tag style (type "text/css")
@@ -157,7 +170,7 @@
 									(princ "Achieved"))))))
 
 (defun list-todo-list (todolist)
-	(mapcar #'todo-item-info todolist))
+	(mapcar #'modifiable-todo-item-info todolist))
 
 (defun todo-item-info (item)
 	(tag section (id 'todoitem)
@@ -166,6 +179,20 @@
 								(princ "[ ] ")
 								(princ "[*] ")) ; Need to come up with something better than this
 						(princ (car (cdr item))))))
+
+(defun modifiable-todo-item-info (item)
+	(tag section (id 'todoitem)
+			 (progn
+				 (tag p ()
+							(if (eq (car (cdr (cdr (cdr item)))) nil)
+									(princ "[ ] ")
+									(princ "[*] "))
+							(princ (car (cdr item)))
+							(tag form (method 'post)
+									 (progn
+										 (tag input (type 'hidden name 'todoitemid value (car item)))
+										 (tag input (type 'submit name 'todoitemdone value 'done))
+										 (tag input (type 'submit name 'todoitemdelete value 'delete))))))))
 
 (defun modifiable-goal-info (goal)
 	(tag section (id 'expandedgoalinfo)
