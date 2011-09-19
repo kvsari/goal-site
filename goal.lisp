@@ -11,9 +11,10 @@
 (defparameter *todo-count* 0)
 
 (defun create-goal (title description)
-	(let ((currid *id-count*))
+	(let ((currid *id-count*)
+				(timestamp (get-universal-time)))
 		(setf *id-count* (1+ *id-count*))
-		(list currid title description nil)))
+		(list currid title description nil timestamp)))
 
 (defun create-todo-item (item)
 	(let ((currid *todo-count*)

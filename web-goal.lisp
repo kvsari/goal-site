@@ -192,7 +192,11 @@
 (defun goal-info (goal)
 	(tag section (id 'goalinfo)
 			 (tag h4 ()
-						(format t "~a" (car (cdr goal))))
+						(let ((link nil))
+							(progn
+								(format link "goal?goalid=~a" (car goal))
+								(tag a (href link) ; link doesn't seem to hold the value?
+										 (format t "~a" (car (cdr goal)))))))
 			 (tag p ()
 						(format t "~a" (car (cdr (cdr goal)))))
 			 (tag p ()
