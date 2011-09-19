@@ -27,7 +27,7 @@
 										(create-goal-form)
 										(tag h3 ()
 												 (princ "All Goals<br>"))
-										(list-modifiable-goals *goals*)
+										(list-modifiable-goals (get-pruned-goal-list-copy *show-all* *goals*))
 										(save-goals-to-file "test.goals" *goals*)))
 							(if (equal path "TODOLIST")
 									(progn
@@ -36,8 +36,21 @@
 										(process-parameters params)
 										(tag h2 ()
 												 (princ "Todo List<br>"))
-										(list-todo-list *todo-list*)
+										(list-todo-list (get-pruned-item-list-copy *show-all* *todo-list*))
 										(save-todo-items-to-file "items.todo" *todo-list*)))))))
+
+(defun save-show-all-to-file (filename show)
+	(with-open-file (out filename
+											 :direction :output
+											 :if-exists :supersede)
+		(with-standard-io-syntax
+			(print show out))))
+
+(defun load-show-all-from-file (filename)
+	(with-open-file (in filename
+											:direction :input)
+		(with-standard-io-syntax
+			(setf *show-all* (read in)))))
 
 (defun print-top-navigation-menu ()
 	(tag nav ()
@@ -52,16 +65,30 @@
 (defun hide-show-completed ()
 	(tag p ()
 			 (tag form (method 'post)
-						(tag input (type 'submit value 'showall))
-						(tag input (type 'submit value 'hidecomplete)))))
+						(tag input (type 'submit name 'showall value 'showall))
+						(tag input (type 'submit name 'hidecomplete value 'hidecomplete)))))
+
+(defun get-pruned-goal-list-copy (show goals)
+	(if (eq show nil)
+			(labels ((cmpl-rem (goal)
+								 (eq (car (cdr (cdr (cdr goal)))) t)))
+				(remove-if #'cmpl-rem goals))
+			goals))
+
+(defun get-pruned-item-list-copy (show todolist)
+	(if (eq show nil)
+			(labels ((cmpl-rem (item)
+								 (eq (car (cdr (cdr (cdr item)))) t)))
+				(remove-if #'cmpl-rem todolist))
+			todolist))
 
 (defun html5-doctype ()
 	(princ "<!DOCTYPE HTML>"))
 
-; Currently only handles form input for adding goals.
 (defun process-parameters (params)
 	(if params
 			(progn
+				(load-show-all-from-file "showall.conf")
 				(if (equal (car (assoc 'createGoalTitle params)) 'createGoalTitle)
 						(process-create-goal-parameters params))
 				(if (equal (car (assoc 'delete params)) 'delete)
@@ -78,6 +105,12 @@
 				(if (equal (car (assoc 'todoitemdelete params)) 'todoitemdelete)
 						(let ((id (parse-integer (cdr (assoc 'todoitemid params)))))
 							(delete-todo-item id)))
+				(if (equal (car (assoc 'showall params)) 'showall)
+						;(error "Showing all"))
+						(setf *show-all* t))
+				(if (equal (car (assoc 'hidecomplete params)) 'hidecomplete)
+						(setf *show-all* nil))
+				(save-show-all-to-file "showall.conf" *show-all*)
 				;(tag script ()
 				;		 (princ "window.setTimeout('window.location=\"goals\"',1000)")); Clear out the address bar of parameters
 				)))
