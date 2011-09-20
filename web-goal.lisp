@@ -18,6 +18,7 @@
 				 (tag body ()
 							(print-top-navigation-menu)
 							(hide-show-completed)
+							;(princ path)
 							(if (equal path "GOALS")
 									(progn
 										(load-goals-from-file "test.goals")
@@ -37,7 +38,12 @@
 										(tag h2 ()
 												 (princ "Todo List<br>"))
 										(list-todo-list (get-pruned-item-list-copy *show-all* *todo-list*))
-										(save-todo-items-to-file "items.todo" *todo-list*)))))))
+										(save-todo-items-to-file "items.todo" *todo-list*)))
+							(if (equal path "goal")
+									(let ((goalid (parse-integer (cdr (assoc 'goalid params)))))
+										(process-goal-note-parameters params)
+										(extended-goal-info (search-id goalid *goals*))))
+							))))
 
 (defun save-show-all-to-file (filename show)
 	(with-open-file (out filename
@@ -114,6 +120,12 @@
 				;(tag script ()
 				;		 (princ "window.setTimeout('window.location=\"goals\"',1000)")); Clear out the address bar of parameters
 				)))
+
+(defun process-goal-note-parameters (params)
+	(if params
+			(progn
+				(if (equal (car (assoc 'goalnote params)) 'goalnote)
+						(princ "Goal Note entered")))))
 
 (defun process-create-goal-parameters (params)
 	(let ((title (cdr (assoc 'createGoalTitle params)))
@@ -192,10 +204,10 @@
 (defun goal-info (goal)
 	(tag section (id 'goalinfo)
 			 (tag h4 ()
-						(let ((link nil))
+						(let ((link (make-string-output-stream)))
 							(progn
 								(format link "goal?goalid=~a" (car goal))
-								(tag a (href link) ; link doesn't seem to hold the value?
+								(tag a (href (get-output-stream-string link))
 										 (format t "~a" (car (cdr goal)))))))
 			 (tag p ()
 						(format t "~a" (car (cdr (cdr goal)))))
@@ -205,6 +217,27 @@
 							(if (eq (car (cdr (cdr (cdr goal)))) nil)
 									(princ "Incomplete")
 									(princ "Achieved"))))))
+
+(defun extended-goal-info (goal)
+	(tag section (id 'goalinfo)
+			 (tag h4 ()
+						(princ (car (cdr goal))))
+			 (tag p ()
+						(format t "~a" (car (cdr (cdr goal)))))
+			 (tag p ()
+						(progn
+							(princ "Status: ")
+							(if (eq (car (cdr (cdr (cdr goal)))) nil)
+									(princ "Incomplete")
+									(princ "Acheiveed"))))
+			 (tag p ()
+						(princ "Notes<br>"))
+			 (tag p ()
+						(tag form (method 'post)
+								 (tag label (for 'note)
+											(princ "Note: "))
+								 (tag textarea (rows '10 cols '100 wrap 'physical name 'goalnote))
+								 (tag input (type 'submit name 'submitnote value 'submitnote))))))
 
 (defun list-todo-list (todolist)
 	(mapcar #'modifiable-todo-item-info todolist))

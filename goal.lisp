@@ -29,6 +29,18 @@
 (defun set-goal (title description)
 	(push (create-goal title description) *goals*))
 
+(defun create-goal-note (note)
+	(let ((timestamp (get-universal-time)))
+		(list timestamp note)))
+
+;(defun create-goal-note-alist ()
+;	(list 
+
+;(defun add-note-to-goal (goal note)
+;	(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
+;		(when (not notes)
+;			(
+
 (defun set-todo (item)
 	(push (create-todo-item item) *todo-list*))
 
