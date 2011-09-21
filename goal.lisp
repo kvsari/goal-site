@@ -29,17 +29,26 @@
 (defun set-goal (title description)
 	(push (create-goal title description) *goals*))
 
-(defun create-goal-note (note)
+(defun create-goal-note (id note)
 	(let ((timestamp (get-universal-time)))
-		(list timestamp note)))
+		(list id timestamp note)))
 
-;(defun create-goal-note-alist ()
-;	(list 
+(defun add-note-to-goal (goal text)
+	(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
+		(if (not notes)
+			(let ((note (create-goal-note 0 text)))
+				(setf (cdr (cdr (cdr (cdr (cdr goal))))) (list (list note))))
+			(let ((oldid (car (car (car (cdr (cdr (cdr (cdr (cdr goal))))))))))
+				(let ((newid (1+ oldid)))
+					(push (create-goal-note newid text) (car (cdr (cdr (cdr (cdr (cdr goal))))))))))))
 
-;(defun add-note-to-goal (goal note)
-;	(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
-;		(when (not notes)
-;			(
+; Work in this one next
+(defun search-goal-note-id (goal id)
+	(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
+		(princ notes)))
+
+; And this and the repl portion of iteration two should be complete
+(defun delete-goal-note (goal id))
 
 (defun set-todo (item)
 	(push (create-todo-item item) *todo-list*))
