@@ -42,14 +42,22 @@
 				(let ((newid (1+ oldid)))
 					(push (create-goal-note newid text) (car (cdr (cdr (cdr (cdr (cdr goal))))))))))))
 
-; Work in this one next
-(defun search-goal-note-id (goal id)
+(defun search-goal-note-id (goal id)	
 	(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
-		(princ notes)))
+		(if notes
+				(assoc id notes))))
 
-; And this and the repl portion of iteration two should be complete
-(defun delete-goal-note (goal id))
-
+(defun delete-goal-note (goal-id id)
+	(let ((goal (search-id goal-id *goals*))
+				(new-notes nil))
+		(progn
+			(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
+				(setf new-notes 
+							(labels ((id-rem (tid)
+												 (eq (car (assoc (car tid) notes)) id)))
+								(remove-if #'id-rem notes))))
+			(setf (cdr (cdr (cdr (cdr (cdr goal))))) (list new-notes)))))
+			
 (defun set-todo (item)
 	(push (create-todo-item item) *todo-list*))
 
