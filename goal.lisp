@@ -47,6 +47,9 @@
 		(if notes
 				(assoc id notes))))
 
+(defun get-all-goal-notes (goal)
+	(car (cdr (cdr (cdr (cdr (cdr goal)))))))
+
 (defun delete-goal-note (goal-id id)
 	(let ((goal (search-id goal-id *goals*))
 				(new-notes nil))

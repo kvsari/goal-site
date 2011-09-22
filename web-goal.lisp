@@ -40,9 +40,12 @@
 										(list-todo-list (get-pruned-item-list-copy *show-all* *todo-list*))
 										(save-todo-items-to-file "items.todo" *todo-list*)))
 							(if (equal path "goal")
-									(let ((goalid (parse-integer (cdr (assoc 'goalid params)))))
-										(process-goal-note-parameters params)
-										(extended-goal-info (search-id goalid *goals*))))
+									(progn
+										(load-goals-from-file "test.goals")
+										(let ((goalid (parse-integer (cdr (assoc 'goalid params)))))
+											(process-goal-note-parameters params)
+											(extended-goal-info (search-id goalid *goals*)))
+										(save-goals-to-file "test.goals" *goals*)))
 							))))
 
 (defun save-show-all-to-file (filename show)
@@ -125,7 +128,13 @@
 	(if params
 			(progn
 				(if (equal (car (assoc 'goalnote params)) 'goalnote)
-						(princ "Goal Note entered")))))
+						(let ((goalid (parse-integer (cdr (assoc 'goalid params))))
+									(text (cdr (assoc 'goalnote params))))
+							(add-note-to-goal (search-id goalid *goals*) text)))
+				(if (equal (car (assoc 'deletenote params)) 'deletenote)
+						(let ((goalid (parse-integer (cdr (assoc 'goalid params))))
+									(noteid (parse-integer (cdr (assoc 'noteid params)))))
+							(delete-goal-note goalid noteid))))))
 
 (defun process-create-goal-parameters (params)
 	(let ((title (cdr (assoc 'createGoalTitle params)))
@@ -231,13 +240,24 @@
 									(princ "Incomplete")
 									(princ "Acheiveed"))))
 			 (tag p ()
-						(princ "Notes<br>"))
-			 (tag p ()
 						(tag form (method 'post)
 								 (tag label (for 'note)
-											(princ "Note: "))
+											(princ "New Note: "))
 								 (tag textarea (rows '10 cols '100 wrap 'physical name 'goalnote))
-								 (tag input (type 'submit name 'submitnote value 'submitnote))))))
+								 (tag input (type 'submit name 'submitnote value 'submitnote))))
+			 (tag p ()
+						(progn
+							(princ "All Notes... <br>")
+							(mapcar #'goal-note-info (get-all-goal-notes goal))))))
+
+(defun goal-note-info (note)
+	(tag p ()
+			 (progn
+				 (format t "~a<br>" (car (cdr (cdr note))))
+				 (tag form (method 'post)
+							(progn
+								(tag input (type 'hidden name 'noteid value (car note)))
+								(tag input (type 'submit name 'deletenote value 'deletenote)))))))
 
 (defun list-todo-list (todolist)
 	(mapcar #'modifiable-todo-item-info todolist))
