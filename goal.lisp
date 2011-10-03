@@ -1,6 +1,6 @@
-;; Stephan Luther
-;; Goal site project
-;; This is the REPL driven portion
+;;;; Stephan Luther
+;;;; Goal site project
+;;;; This is the REPL driven portion
 
 (defparameter *goals* nil)
 
@@ -10,11 +10,43 @@
 
 (defparameter *todo-count* 0)
 
-(defun create-goal (title description)
-	(let ((currid *id-count*)
-				(timestamp (get-universal-time)))
-		(setf *id-count* (1+ *id-count*))
-		(list currid title description nil timestamp)))
+(defparameter *information* (list :owner nil :goals nil :todo-list nil :filename nil))
+
+;;; This is common to all todo items, goals etc
+;;; (unique-id, timestamp)
+(defun create-header (id)
+	(let ((timestamp (get-universal-time)))
+		(list id timestamp)))
+
+;;; Expects a list which contains headers in the first element, other it'll return nil or something else
+(defun get-latest-id (data)
+	(car (car (car data))))
+
+;;; Same as above function but adds one to the id. This is to remove logic in calling code
+(defun get-next-id (data)
+	(if data
+			(1+ (get-latest-id data))
+			0))
+
+(defun create-goal (id title description)
+	(let ((header (create-header id))
+				(body (list title description)))
+		(list header body)))
+
+(defun add-goal (goal data)
+	(let ((goals (getf data :goals)))
+		(if goals
+				(push goal (getf data :goals))
+				(setf (getf data :goals) (list goal)))))
+
+(defun search-goal-id (id))
+
+(defun delete-goal (id data))
+
+;;; Debug function for adding a goal
+(defun add-goal-repl ()
+	(let ((goal (create-goal (get-next-id (getf *information* :goals)) (prompt-read 'Title) (prompt-read 'Description))))
+		(add-goal goal *information*)))
 
 (defun create-todo-item (item)
 	(let ((currid *todo-count*)
@@ -25,9 +57,6 @@
 (defun prompt-read (section)
 	(format t "~a: " section)
 	(read-line))
-
-(defun set-goal (title description)
-	(push (create-goal title description) *goals*))
 
 (defun create-goal-note (id note)
 	(let ((timestamp (get-universal-time)))
@@ -64,9 +93,6 @@
 (defun set-todo (item)
 	(push (create-todo-item item) *todo-list*))
 
-(defun set-goal-repl ()
-	(push (create-goal (prompt-read 'title) (prompt-read 'description)) *goals*))
-
 (defun set-todo-repl ()
 	(push (create-todo-item (prompt-read 'item)) *todo-list*))
 
@@ -96,38 +122,6 @@
 										 (eq (car (assoc (car tid) items)) id)))
 						(remove-if #'id-rem items)))))
 
-(defun save-goals-to-file (filename goals)
-	(with-open-file (out filename
-											 :direction :output
-											 :if-exists :supersede)
-		(with-standard-io-syntax
-			(print goals out))))
-
-(defun save-todo-items-to-file (filename items)
-	(with-open-file (out filename
-											 :direction :output
-											 :if-exists :supersede)
-		(with-standard-io-syntax
-			(print items out))))
-
-(defun load-goals-from-file (filename)
-	(progn
-		(with-open-file (in filename
-												:direction :input)
-			(with-standard-io-syntax
-				(setf *goals* (read in))))
-		(let ((goals *goals*))
-			(setf *id-count* (1+ (car (car goals))))))) ; Last goal has the highest id
-
-(defun load-todo-items-from-file (filename)
-	(progn
-		(with-open-file (in filename
-												:direction :input)
-			(with-standard-io-syntax
-				(setf *todo-list* (read in))))
-		(let ((items *todo-list*))
-			(setf *todo-count* (1+ (car (car items)))))))
-
 (defun list-all-goals (goals)
 	(labels ((print-goal (goal)
 						 (format t "ID: ~a~%" (car goal))
@@ -135,3 +129,16 @@
 						 (format t "Description: ~a~%" (car (cdr (cdr goal))))
 						 (format t "Accomplished: ~a~%~%" (car (cdr (cdr (cdr goal)))))))
 		(mapcar #'print-goal goals)))
+
+(defun save-information-to-file (filename information)
+	(with-open-file (out filename
+											 :direction :output
+											 :if-exists :supersede)
+		(with-standard-io-syntax
+			(print information out))))
+
+(defun load-information-from-file (filename)
+	(with-open-file (in filename
+											:direction :input)
+		(with-standard-io-syntax
+			(setf *information* (read in)))))
