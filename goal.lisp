@@ -28,6 +28,11 @@
 			(1+ (get-latest-id data))
 			0))
 
+(defun create-note (id text)
+	(let ((header (create-header id))
+				(body (list text)))
+		(list header body)))
+
 (defun create-goal (id title description)
 	(let ((header (create-header id))
 				(body (list title description)))
@@ -39,9 +44,30 @@
 				(push goal (getf data :goals))
 				(setf (getf data :goals) (list goal)))))
 
-(defun search-goal-id (id))
+;;; Returns a list containing the correct header id. Expects a list of lists containing headers as their first element
+(defun search-id (id data)
+	(car 
+	 (labels ((narrow (segment)
+							(let ((header (car segment)))
+								(equal (car header) id))))
+		 (remove-if-not #'narrow data))))
 
-(defun delete-goal (id data))
+;;; Must feed it the *information* global for data or an equally laid out data source
+(defun delete-goal (id data)
+	(setf (getf data :goals)
+				(let ((goals (getf data :goals)))
+					(labels ((test (segment)
+										 (let ((header (car segment)))
+											 (equal (car header) id))))
+						(remove-if #'test goals)))))
+
+;;; Adds an extra field in the header portion of the segment with the value T. Expecting the header portion to only have
+;;; two elements in the list since it will overwrite any third element. Expects data to be a list of lists that contain
+;;; a header as the first item
+(defun set-complete (id data)
+	(let ((goal (search-goal-id id data)))
+		(if goal
+				(setf (cdr (cdr (car goal))) (list t)))))
 
 ;;; Debug function for adding a goal
 (defun add-goal-repl ()
@@ -58,23 +84,20 @@
 	(format t "~a: " section)
 	(read-line))
 
-(defun create-goal-note (id note)
-	(let ((timestamp (get-universal-time)))
-		(list id timestamp note)))
-
+;;; Function creates the note from the text and assigns the correct id to it.
 (defun add-note-to-goal (goal text)
-	(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
-		(if (not notes)
-			(let ((note (create-goal-note 0 text)))
-				(setf (cdr (cdr (cdr (cdr (cdr goal))))) (list (list note))))
-			(let ((oldid (car (car (car (cdr (cdr (cdr (cdr (cdr goal))))))))))
-				(let ((newid (1+ oldid)))
-					(push (create-goal-note newid text) (car (cdr (cdr (cdr (cdr (cdr goal))))))))))))
+	(let ((body (car (cdr goal))))
+		(let ((notes (car (cdr (cdr body)))))
+			(if (not notes)
+					(setf (cdr (cdr body)) (list (list (create-note 0 text))))
+					(setf (cdr (cdr body)) (push (create-note (get-next-id notes) text) notes))))))
 
-(defun search-goal-note-id (goal id)	
-	(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
-		(if notes
-				(assoc id notes))))
+;;; This function doesn't work. Fix this next.
+(defun search-goal-note-id (id goal)
+	(let ((body (car (cdr goal))))
+		(princ body)
+		(let ((notes (car (cdr (cdr body)))))
+			(search-id id notes))))
 
 (defun get-all-goal-notes (goal)
 	(car (cdr (cdr (cdr (cdr (cdr goal)))))))
@@ -96,24 +119,11 @@
 (defun set-todo-repl ()
 	(push (create-todo-item (prompt-read 'item)) *todo-list*))
 
-(defun search-id (id goals)
-	(assoc id goals))
-
 ; This particular function is not in the iteration 1 spec so will leave as stub for now
 (defun search-title (title goals))
 
-(defun set-complete (id goals)
-	(setf (car (cdr (cdr (cdr (search-id id goals))))) t))
-
 (defun set-todo-item-complete (id item)
 	(setf (car (cdr (cdr (cdr (search-id id item))))) t))
-
-(defun delete-goal (id)
-	(setf *goals*
-				(let ((goals *goals*))
-					(labels ((id-rem (tid)
-										 (eq (car (assoc (car tid) goals)) id)))
-						(remove-if #'id-rem goals)))))
 
 (defun delete-todo-item (id)
 	(setf *todo-list*
