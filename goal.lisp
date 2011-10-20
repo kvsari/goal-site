@@ -2,11 +2,7 @@
 ;;;; Goal site project
 ;;;; This is the REPL driven portion
 
-(defparameter *goals* nil)
-
 (defparameter *todo-list* nil)
-
-(defparameter *id-count* 0)
 
 (defparameter *todo-count* 0)
 
@@ -101,6 +97,7 @@
 (defun search-goal-note-id (id goal)
 	(search-id id (get-all-goal-notes goal)))
 
+;;; Deletes a goal note by id. Expects the specific goal to be passed.
 (defun delete-goal-note (id goal)
 	(let ((body (car (cdr goal))))
 		(setf (cdr (cdr body)) (list
