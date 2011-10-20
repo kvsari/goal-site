@@ -90,28 +90,25 @@
 		(let ((notes (car (cdr (cdr body)))))
 			(if (not notes)
 					(setf (cdr (cdr body)) (list (list (create-note 0 text))))
-					(setf (cdr (cdr body)) (push (create-note (get-next-id notes) text) notes))))))
-
-;;; This function doesn't work. Fix this next.
-(defun search-goal-note-id (id goal)
-	(let ((body (car (cdr goal))))
-		(princ body)
-		(let ((notes (car (cdr (cdr body)))))
-			(search-id id notes))))
+					(setf (cdr (cdr body)) (list (push (create-note (get-next-id notes) text) notes)))))))
 
 (defun get-all-goal-notes (goal)
-	(car (cdr (cdr (cdr (cdr (cdr goal)))))))
+	(let ((body (car (cdr goal))))
+		(let ((notes (cdr (cdr body))))
+			(car notes))))
 
-(defun delete-goal-note (goal-id id)
-	(let ((goal (search-id goal-id *goals*))
-				(new-notes nil))
-		(progn
-			(let ((notes (car (cdr (cdr (cdr (cdr (cdr goal))))))))
-				(setf new-notes 
-							(labels ((id-rem (tid)
-												 (eq (car (assoc (car tid) notes)) id)))
-								(remove-if #'id-rem notes))))
-			(setf (cdr (cdr (cdr (cdr (cdr goal))))) (list new-notes)))))
+;;; Finds a goal note by id inside of a goal. Expects the specific goal to be passed.
+(defun search-goal-note-id (id goal)
+	(search-id id (get-all-goal-notes goal)))
+
+(defun delete-goal-note (id goal)
+	(let ((body (car (cdr goal))))
+		(setf (cdr (cdr body)) (list
+					(let ((notes (car (cdr (cdr body)))))
+						(labels ((test (segment)
+											 (let ((header (car segment)))
+												 (equal (car header) id))))
+							(remove-if #'test notes)))))))
 			
 (defun set-todo (item)
 	(push (create-todo-item item) *todo-list*))
@@ -119,7 +116,7 @@
 (defun set-todo-repl ()
 	(push (create-todo-item (prompt-read 'item)) *todo-list*))
 
-; This particular function is not in the iteration 1 spec so will leave as stub for now
+;;; This particular function is not in the iteration 1 spec so will leave as stub for now
 (defun search-title (title goals))
 
 (defun set-todo-item-complete (id item)
