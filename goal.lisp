@@ -2,10 +2,7 @@
 ;;;; Goal site project
 ;;;; This is the REPL driven portion
 
-(defparameter *todo-list* nil)
-
-(defparameter *todo-count* 0)
-
+;;; Global list
 (defparameter *information* (list :owner nil :goals nil :todo-list nil :filename nil))
 
 ;;; This is common to all todo items, goals etc
