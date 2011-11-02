@@ -28,7 +28,7 @@
 										(create-goal-form)
 										(tag h3 ()
 												 (princ "All Goals<br>"))
-										(list-modifiable-goals (get-pruned-goal-list-copy *show-all* (getf *information* :goals)))))
+										(list-all-goals-summary (get-pruned-list-from *show-all* (getf *information* :goals)))))
 							(if (equal path "TODOLIST")
 									(progn
 										(create-todo-item-form)
@@ -192,11 +192,8 @@
 				 (princ "}")
 				 )))
 
-(defun list-goals (goals)
-	(mapcar #'goal-info goals))
-
-(defun list-modifiable-goals (goals)
-	(mapcar #'modifiable-goal-info goals))
+(defun list-all-goals-summary (goals))
+	;(mapcar #'goal-info goals))
 
 (defun html-show-goal-summary (goal)
 	(let ((header (car goal))
