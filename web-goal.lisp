@@ -192,6 +192,19 @@
 				 (princ "}")
 				 )))
 
+(defun format-timestamp (timestamp)
+	(let ((decoded-time (multiple-value-list (decode-universal-time timestamp))))
+		(let ((hour (nth 2 decoded-time))
+					(minute (nth 1 decoded-time))
+					(second (nth 0 decoded-time))
+					(day (nth 3 decoded-time))
+					(month (nth 4 decoded-time))
+					(year (nth 5 decoded-time))
+					(timestring (make-string-output-stream)))
+			(format timestring "~2@a:~2@a:~2@a - ~2@a/~2@a/~a" hour minute second day month year)
+			(get-output-stream-string timestring))))
+	
+
 (defun list-all-goals-summary (goals)
 	(mapcar #'html-show-goal-summary goals))
 
@@ -199,6 +212,8 @@
 	(let ((header goal)
 				(body (cdr goal)))
 		(tag section (id 'goalinfo)
+				 (tag p ()
+							(princ (format-timestamp (car (cdr (car header))))))
 				 (tag h4 ()
 							(let ((link (make-string-output-stream)))
 								(progn
