@@ -1,6 +1,6 @@
-;; Stephan Luther
-;; The web portion of the goal-site
-;; 2011/08/30
+;;;; Stephan Luther
+;;;; The web portion of the goal-site
+;;;; 2011/08/30
 
 (load "goal.lisp")
 (load "webserver.lisp")
@@ -21,14 +21,7 @@
 							;(princ path)
 							(load-information-from-file "information.goals")
 							(if (equal path "GOALS")
-									(progn
-										(tag h2 ()
-												 (princ "Goal section!<br>"))
-										(process-parameters params)
-										(create-goal-form)
-										(tag h3 ()
-												 (princ "All Goals<br>"))
-										(list-all-goals-summary (get-pruned-list-from *show-all* (getf *information* :goals)))))
+									(http-path-goals params))
 							(if (equal path "TODOLIST")
 									(progn
 										(create-todo-item-form)
@@ -37,11 +30,31 @@
 												 (princ "Todo List<br>"))
 										(list-todo-list (get-pruned-item-list-copy *show-all* (getf *information* :todo-list)))))
 							(if (equal path "goal")
-									(let ((goalid (parse-integer (cdr (assoc 'goalid params)))))
-										(progn
-											(process-goal-note-parameters params)
-											(html-show-goal (search-id goalid (getf *information* :goals))))))
+									(http-path-goal params))
+							(if (equal path "achievegoal")
+									(http-path-achievegoal params))
 							(save-information-to-file "information.goals" *information*)))))
+
+;; Can modify this function to receive a location variable perhaps to redirect back to the calling paget
+(defun http-path-achievegoal (parameters)
+	(let ((goalid (parse-integer (cdr (assoc 'goalid parameters)))))
+		(set-complete goalid (getf *information* :goals))))
+
+(defun http-path-goal (parameters)
+	(let ((goalid (parse-integer (cdr (assoc 'goalid parameters)))))
+		(progn
+			(process-goal-note-parameters parameters)
+			(html-show-goal (search-id goalid (getf *information* :goals))))))
+
+(defun http-path-goals (parameters)
+	(progn
+		(tag h2 ()
+				 (princ "Goal section!<br>"))
+		(process-parameters parameters)
+		(create-goal-form)
+		(tag h3 ()
+				 (princ "All Goals<br>"))
+		(list-all-goals-summary (get-pruned-list-from *show-all* (getf *information* :goals)))))
 
 (defun save-show-all-to-file (filename show)
 	(with-open-file (out filename
@@ -118,7 +131,7 @@
 				(if (equal (car (assoc 'goalnote params)) 'goalnote)
 						(let ((goalid (parse-integer (cdr (assoc 'goalid params))))
 									(text (cdr (assoc 'goalnote params))))
-							(add-note-to-goal (search-id goalid *goals*) text)))
+							(add-note-to-goal (search-id goalid (getf *information* :goals)) text)))
 				(if (equal (car (assoc 'deletenote params)) 'deletenote)
 						(let ((goalid (parse-integer (cdr (assoc 'goalid params))))
 									(noteid (parse-integer (cdr (assoc 'noteid params)))))
@@ -127,7 +140,8 @@
 (defun process-create-goal-parameters (params)
 	(let ((title (cdr (assoc 'createGoalTitle params)))
 				(desc (cdr (assoc 'createGoalDescription params))))
-		(set-goal title desc)))
+		(let ((goal (create-goal (get-next-id (getf *information* :goals)) title desc)))
+			(add-goal goal *information*))))
 
 (defun process-create-todo-item-parameters (params)
 	(let ((item (cdr (assoc 'createtodoitem params))))
@@ -209,8 +223,8 @@
 	(mapcar #'html-show-goal-summary goals))
 
 (defun html-show-goal-summary (goal)
-	(let ((header goal)
-				(body (cdr goal)))
+	(let ((header goal)      ; This section here needs to be fixed
+				(body (cdr goal))) ; I'm having to use too many cars and cdrs to get to the data
 		(tag section (id 'goalinfo)
 				 (tag p ()
 							(princ (format-timestamp (car (cdr (car header))))))
@@ -225,13 +239,19 @@
 				 (tag p ()
 							(progn
 								(princ "Status: ")
-								(if (eq (car (cdr (cdr header))) nil)
+								(if (eq (car (cdr (cdr (car header)))) nil)
 										(let ((link (make-string-output-stream)))
 											(progn
-												(format link "acheivegoal?goalid=~a" (car (car header)))
+												(format link "achievegoal?goalid=~a" (car (car header)))
 												(tag a (href (get-output-stream-string link))
 														 (format t "~a" "Incomplete"))))
-										(princ "Acheived")))))))
+										(princ "Achieved"))))
+				 (tag p ()
+							(let ((link (make-string-output-stream)))
+								(progn
+									(format link "deletegoal?goalid=~a" (car (car header)))
+									(tag a (href (get-output-stream-string link))
+											 (format t "~a" "Delete Goal"))))))))
 
 (defun html-show-goal (goal)
 	(html-show-goal-summary goal)
