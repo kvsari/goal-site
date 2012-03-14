@@ -73,16 +73,18 @@
 
 (defun serve-usocket (request-handler)
 	(let ((socket (usocket:socket-listen "127.0.0.1" 8088)))
-		(unwind-protect
-				 (loop (with-open-stream (stream (usocket:socket-accept socket))
-								 (let* ((url (parse-url (read usocket:socket-stream stream)))
-												(path (car url))
-												(header (get-header stream))
-												(params (append (cdr url)
-																				(get-conten-params stream header)))
-												(*standard-output* stream))
-									 (funcall request-handler path header params))))
-			(usocket:socket-close socket))))
+		(let ((connect (usocket:socket-accept socket)))
+			(unwind-protect
+					 (loop (with-open-stream (stream (usocket:socket-stream connect))
+							(let* ((url (parse-url (read-line stream)))
+										 (path (car url))
+										 (header (get-header stream))
+										 (params (append (cdr url)
+																		 (get-content-params stream header)))
+										 (*standard-output* stream))
+								(funcall request-handler path header params))))
+				(usocket:socket-close connect)))))
+ 
 
 (defun print-tag (name alst closingp)
 	(princ #\<)
