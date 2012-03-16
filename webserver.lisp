@@ -58,7 +58,7 @@
 				(read-sequence content stream)
 				(parse-params content)))))
 
-(defun serve (request-handler)
+(defun serve-clisp-sockets (request-handler)
 	(let ((socket (socket-server 8080)))
 		(unwind-protect
 				 (loop (with-open-stream (stream (socket-accept socket))
@@ -73,17 +73,16 @@
 
 (defun serve-usocket (request-handler)
 	(let ((socket (usocket:socket-listen "127.0.0.1" 8088)))
-		(let ((connect (usocket:socket-accept socket)))
-			(unwind-protect
-					 (loop (with-open-stream (stream (usocket:socket-stream connect))
-							(let* ((url (parse-url (read-line stream)))
-										 (path (car url))
-										 (header (get-header stream))
-										 (params (append (cdr url)
-																		 (get-content-params stream header)))
-										 (*standard-output* stream))
-								(funcall request-handler path header params))))
-				(usocket:socket-close connect)))))
+		(unwind-protect
+				 (loop (with-open-stream (stream (usocket:socket-stream (usocket:socket-accept socket)))
+								 (let* ((url (parse-url (read-line stream)))
+												(path (car url))
+												(header (get-header stream))
+												(params (append (cdr url)
+																				(get-content-params stream header)))
+												(*standard-output* stream))
+									 (funcall request-handler path header params))))
+			(usocket:socket-close socket))))
  
 
 (defun print-tag (name alst closingp)
