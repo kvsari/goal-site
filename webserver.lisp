@@ -72,7 +72,7 @@
 			(socket-server-close socket))))
 
 (defun serve-usocket (request-handler)
-	(let ((socket (usocket:socket-listen "127.0.0.1" 8088)))
+	(let ((socket (usocket:socket-listen "127.0.0.1" 8080)))
 		(unwind-protect
 				 (loop (with-open-stream (stream (usocket:socket-stream (usocket:socket-accept socket)))
 								 (let* ((url (parse-url (read-line stream)))

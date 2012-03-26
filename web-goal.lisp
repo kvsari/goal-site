@@ -63,7 +63,7 @@
 				(noteid (parse-integer (cdr (assoc 'noteid parameters)))))
 		(delete-goal-note noteid (search-id goalid (getf *information* :goals)))))
 
-;; Can modify this function to receive a location variable perhaps to redirect back to the calling paget
+;; Can modify this function to receive a location variable perhaps to redirect back to the calling page
 (defun http-path-achievegoal (parameters)
 	(let ((goalid (parse-integer (cdr (assoc 'goalid parameters)))))
 		(set-complete goalid (getf *information* :goals))))
