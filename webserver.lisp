@@ -3,7 +3,7 @@
 
 (load "macros.lisp")
 
-;(require :usocket)
+(ql:quickload "usocket")
 
 (defun http-char (c1 c2 &optional (default #\Space))
 	(let ((code (parse-integer
@@ -59,7 +59,7 @@
 				(parse-params content)))))
 
 (defun serve-clisp-sockets (request-handler)
-	(let ((socket (socket-server 8080)))
+	(let ((socket (socket-server 8888)))
 		(unwind-protect
 				 (loop (with-open-stream (stream (socket-accept socket))
 								 (let* ((url (parse-url (read-line stream)))
@@ -71,18 +71,18 @@
 									 (funcall request-handler path header params))))
 			(socket-server-close socket))))
 
-;(defun serve-usocket (request-handler)
-;	(let ((socket (usocket:socket-listen "127.0.0.1" 8080)))
-;		(unwind-protect
-;				 (loop (with-open-stream (stream (usocket:socket-stream (usocket:socket-accept socket)))
-;								 (let* ((url (parse-url (read-line stream)))
-;												(path (car url))
-;												(header (get-header stream))
-;												(params (append (cdr url)
-;																				(get-content-params stream header)))
-;												(*standard-output* stream))
-;									 (funcall request-handler path header params))))
-;			(usocket:socket-close socket))))
+(defun serve-usocket (request-handler)
+	(let ((socket (usocket:socket-listen "0.0.0.0" 8888 :reuse-address t)))
+		(unwind-protect
+				 (loop (with-open-stream (stream (usocket:socket-stream (usocket:socket-accept socket)))
+								 (let* ((url (parse-url (read-line stream)))
+												(path (car url))
+												(header (get-header stream))
+												(params (append (cdr url)
+																				(get-content-params stream header)))
+												(*standard-output* stream))
+									 (funcall request-handler path header params))))
+			(usocket:socket-close socket))))
  
 
 (defun print-tag (name alst closingp)
@@ -111,3 +111,4 @@
 						(princ "<html><form>What is your name?<input name='name' /></form></html>")
 						(format t "<html>Nice to meet you, ~a!</html>" (cdr name))))
 			(princ "Sorry... I don't know that page.")))
+

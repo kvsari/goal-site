@@ -7,6 +7,9 @@
 
 (defparameter *show-all* nil)
 
+(defun run-goal-site ()
+	(serve-usocket #'goal-request-handler))
+
 (defun goal-request-handler (path header params)
 	(progn
 		(html5-doctype)
